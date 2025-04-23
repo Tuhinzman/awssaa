@@ -1,20 +1,5 @@
 ### Monitoring Module - main.tf ###
 
-# SNS Topic for alerts
-resource "aws_sns_topic" "alarms" {
-  name = "${var.prefix}-alarms"
-  
-  tags = var.common_tags
-}
-
-# SNS Topic Subscriptions
-resource "aws_sns_topic_subscription" "email" {
-  count     = length(var.alarm_email_addresses)
-  topic_arn = aws_sns_topic.alarms.arn
-  protocol  = "email"
-  endpoint  = var.alarm_email_addresses[count.index]
-}
-
 # CloudWatch Dashboard
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "${var.prefix}-dashboard"
@@ -145,8 +130,8 @@ resource "aws_cloudwatch_metric_alarm" "web_cpu_high" {
   statistic           = "Average"
   threshold           = 80
   alarm_description   = "Average CPU utilization is too high for Web tier"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   dimensions = {
     AutoScalingGroupName = var.web_asg_name
@@ -166,8 +151,8 @@ resource "aws_cloudwatch_metric_alarm" "web_5xx_errors" {
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "Too many 5XX errors from Web tier targets"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   dimensions = {
     LoadBalancer = var.web_alb_arn
@@ -188,8 +173,8 @@ resource "aws_cloudwatch_metric_alarm" "app_cpu_high" {
   statistic           = "Average"
   threshold           = 80
   alarm_description   = "Average CPU utilization is too high for App tier"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   dimensions = {
     AutoScalingGroupName = var.app_asg_name
@@ -209,8 +194,8 @@ resource "aws_cloudwatch_metric_alarm" "app_memory_high" {
   statistic           = "Average"
   threshold           = 80
   alarm_description   = "Average memory utilization is too high for App tier"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   dimensions = {
     AutoScalingGroupName = var.app_asg_name
@@ -244,7 +229,7 @@ resource "aws_cloudwatch_metric_alarm" "rejected_ssh_connections" {
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "High number of rejected SSH connections detected"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
   
   tags = var.common_tags
 }
@@ -255,8 +240,8 @@ resource "aws_cloudwatch_composite_alarm" "web_tier_health" {
   alarm_name          = "${var.prefix}-web-tier-health"
   alarm_description   = "Composite alarm for web tier health"
   alarm_rule          = "ALARM(${aws_cloudwatch_metric_alarm.web_cpu_high[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.web_5xx_errors[0].alarm_name})"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   tags = var.common_tags
 }
@@ -266,8 +251,8 @@ resource "aws_cloudwatch_composite_alarm" "app_tier_health" {
   alarm_name          = "${var.prefix}-app-tier-health"
   alarm_description   = "Composite alarm for application tier health"
   alarm_rule          = "ALARM(${aws_cloudwatch_metric_alarm.app_cpu_high[0].alarm_name}) OR ALARM(${aws_cloudwatch_metric_alarm.app_memory_high[0].alarm_name})"
-  alarm_actions       = [aws_sns_topic.alarms.arn]
-  ok_actions          = [aws_sns_topic.alarms.arn]
+  alarm_actions       = [var.sns_topic_arn]
+  ok_actions          = [var.sns_topic_arn]
   
   tags = var.common_tags
 }

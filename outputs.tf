@@ -98,6 +98,12 @@ output "db_security_group_id" {
   value       = module.database.db_security_group_id
 }
 
+# SNS Topic Output
+output "sns_topic_arn" {
+  description = "ARN of the SNS topic for alarms"
+  value       = aws_sns_topic.alarms.arn
+}
+
 # S3 Bucket Outputs
 output "static_assets_bucket_name" {
   description = "Name of the S3 bucket for static assets"
@@ -118,6 +124,12 @@ output "ssh_to_bastion" {
 output "application_url" {
   description = "URL to access the web application"
   value       = "http://${module.compute.web_alb_dns_name}"
+}
+
+# Dashboard URL
+output "cloudwatch_dashboard_url" {
+  description = "URL to access the CloudWatch dashboard"
+  value       = module.monitoring.dashboard_url
 }
 
 # Additional Infrastructure Information
@@ -142,7 +154,7 @@ output "created_resources" {
       s3_buckets = 1 + (var.enable_cloudtrail ? 1 : 0)  # Static assets + optional CloudTrail bucket
     }
     security = {
-      security_groups  = 3 + (var.enable_bastion ? 1 : 0) + 1  # Web, App, DB, VPC Endpoints + optional Bastion
+      security_groups  = 4 + (var.enable_bastion ? 1 : 0)  # ALB, Web, App, DB + optional Bastion
       aws_config       = var.enable_aws_config
       cloudtrail       = var.enable_cloudtrail
     }

@@ -30,13 +30,13 @@ variable "app_subnet_ids" {
 variable "web_instance_type" {
   description = "EC2 instance type for web tier"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.small"
 }
 
 variable "app_instance_type" {
   description = "EC2 instance type for application tier"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.small"
 }
 
 variable "key_name" {

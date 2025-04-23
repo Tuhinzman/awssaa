@@ -282,19 +282,4 @@ resource "aws_cloudwatch_metric_alarm" "db_connection_count_high" {
   tags = var.common_tags
 }
 
-# SNS Topic for database alarms (optional)
-resource "aws_sns_topic" "db_alarms" {
-  count = var.create_alarm_sns_topic ? 1 : 0
-  
-  name = "${var.prefix}-db-alarms"
-  
-  tags = var.common_tags
-}
-
-resource "aws_sns_topic_subscription" "db_alarms_email" {
-  count = var.create_alarm_sns_topic && var.alarm_email_addresses != null ? length(var.alarm_email_addresses) : 0
-  
-  topic_arn = aws_sns_topic.db_alarms[0].arn
-  protocol  = "email"
-  endpoint  = var.alarm_email_addresses[count.index]
-}
+# Topic creation has been removed and moved to root module

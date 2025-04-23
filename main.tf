@@ -22,6 +22,21 @@ locals {
   }
 }
 
+# SNS Topic for alarms (at root level to avoid dependency cycles)
+resource "aws_sns_topic" "alarms" {
+  name = "${var.prefix}-alarms"
+  
+  tags = local.common_tags
+}
+
+# SNS Topic Subscriptions
+resource "aws_sns_topic_subscription" "email" {
+  count     = length(var.alarm_email_addresses)
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "email"
+  endpoint  = var.alarm_email_addresses[count.index]
+}
+
 # Network Module
 module "network" {
   source = "./modules/network"
@@ -66,8 +81,6 @@ module "compute" {
   ssh_allowed_cidrs     = var.ssh_allowed_cidrs
   
   common_tags = local.common_tags
-  
-  depends_on = [module.network]
 }
 
 # Database Module
@@ -108,37 +121,32 @@ module "database" {
   auto_minor_version_upgrade = var.db_auto_minor_version_upgrade
   
   max_connections_threshold = var.db_max_connections_threshold
-  cloudwatch_alarm_actions = var.create_alarm_sns_topic ? [module.monitoring.sns_topic_arn] : []
-  cloudwatch_ok_actions = var.create_alarm_sns_topic ? [module.monitoring.sns_topic_arn] : []
-  
-  create_alarm_sns_topic = var.create_alarm_sns_topic
-  alarm_email_addresses = var.alarm_email_addresses
+  cloudwatch_alarm_actions = [aws_sns_topic.alarms.arn]
+  cloudwatch_ok_actions = [aws_sns_topic.alarms.arn]
   
   common_tags = local.common_tags
-  
-  depends_on = [module.network, module.compute]
 }
 
-# Monitoring and Alarms Module (optional but recommended)
+# Monitoring and Alarms Module
 module "monitoring" {
   source = "./modules/monitoring"
   
   prefix         = var.prefix
+  aws_region     = var.aws_region
   enable_alarms  = var.enable_monitoring_alarms
   
   # Resources to monitor
   vpc_id          = module.network.vpc_id
   web_asg_name    = module.compute.web_asg_name
   app_asg_name    = module.compute.app_asg_name
-  web_alb_arn     = module.compute.web_alb_dns_name
-  app_alb_arn     = module.compute.app_alb_dns_name
+  web_alb_arn     = module.compute.web_alb_arn_suffix
+  app_alb_arn     = module.compute.app_alb_arn_suffix
   db_instance_id  = module.database.db_instance_id
   
-  alarm_email_addresses = var.alarm_email_addresses
+  # Pass SNS topic ARN to the monitoring module
+  sns_topic_arn   = aws_sns_topic.alarms.arn
   
   common_tags = local.common_tags
-  
-  depends_on = [module.network, module.compute, module.database]
 }
 
 # S3 Bucket for application static assets

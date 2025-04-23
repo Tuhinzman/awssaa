@@ -70,7 +70,4 @@ output "db_cloudwatch_alarms" {
   }
 }
 
-output "db_sns_topic_arn" {
-  description = "ARN of the SNS topic for database alarms"
-  value       = var.create_alarm_sns_topic ? aws_sns_topic.db_alarms[0].arn : null
-}
+# Removed reference to db_sns_topic_arn as SNS topic is now created in the root module

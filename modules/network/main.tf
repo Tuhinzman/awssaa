@@ -29,7 +29,7 @@ resource "aws_internet_gateway" "mktc_igw" {
 
 # Elastic IPs for NAT Gateways
 resource "aws_eip" "nat" {
-  count = var.create_nat_gateway ? length(var.availability_zones) : 0
+  count  = var.create_nat_gateway ? length(var.availability_zones) : 0
   domain = "vpc"
   
   tags = merge(
@@ -324,21 +324,6 @@ resource "aws_vpc_endpoint" "ec2messages" {
 }
 
 # Flow Logs for network monitoring
-resource "aws_flow_log" "vpc_flow_log" {
-  count                = var.enable_flow_logs ? 1 : 0
-  log_destination_type = "cloud-watch-logs"
-  log_destination      = aws_cloudwatch_log_group.flow_logs[0].arn
-  traffic_type         = "ALL"
-  vpc_id               = aws_vpc.mktc_vpc.id
-  
-  tags = merge(
-    var.common_tags,
-    {
-      Name = "${var.prefix}-flow-log"
-    }
-  )
-}
-
 resource "aws_cloudwatch_log_group" "flow_logs" {
   count             = var.enable_flow_logs ? 1 : 0
   name              = "/aws/vpc/${var.prefix}-flow-logs"
@@ -389,6 +374,22 @@ resource "aws_iam_role_policy" "flow_logs" {
       Resource = "*"
     }]
   })
+}
+
+resource "aws_flow_log" "vpc_flow_log" {
+  count                = var.enable_flow_logs ? 1 : 0
+  log_destination      = aws_cloudwatch_log_group.flow_logs[0].arn
+  log_destination_type = "cloud-watch-logs"
+  traffic_type         = "ALL"
+  vpc_id               = aws_vpc.mktc_vpc.id
+  iam_role_arn         = aws_iam_role.flow_logs[0].arn
+  
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "${var.prefix}-flow-log"
+    }
+  )
 }
 
 # Network ACLs for added security layer

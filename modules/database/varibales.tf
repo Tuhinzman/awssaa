@@ -175,7 +175,7 @@ variable "create_alarm_sns_topic" {
 variable "alarm_email_addresses" {
   description = "List of email addresses for database alarm notifications"
   type        = list(string)
-  default     = null
+  default     = []
 }
 
 variable "db_parameters" {

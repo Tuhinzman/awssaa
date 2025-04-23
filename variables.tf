@@ -303,7 +303,7 @@ variable "create_alarm_sns_topic" {
 variable "alarm_email_addresses" {
   description = "List of email addresses for alarm notifications"
   type        = list(string)
-  default     = []
+  default     = ["mktechcorp@gmail.com"]
 }
 
 # Security and Compliance

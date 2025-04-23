@@ -75,3 +75,9 @@ variable "common_tags" {
     ManagedBy   = "Terraform"
   }
 }
+
+# SNS Topic ARN passed from root module
+variable "sns_topic_arn" {
+  description = "ARN of the SNS topic for alarms created in the root module"
+  type        = string
+}
